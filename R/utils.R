@@ -24,7 +24,6 @@ get_cache_dir <- function(cache_dir){
 #' listed in \code{\link[base:difftime]{base::difftime()}}.
 #' @return \code{TRUE} if the file is older than the cutoff and \code{FALSE} otherwise.
 #' Object of class \code{logical}.
-#' @importFrom stats time
 #'
 needs_update <- function(filepath, cutoff, units){
   age <- as.numeric(difftime(Sys.time(), file.info(filepath)$mtime, units = units))
@@ -86,4 +85,4 @@ read_from_cache <- function(cache_dir, filename, cutoff, units){
 
 utils::globalVariables(c("CNTR_CODE", "NUTS_ID", "NUTS_NAME", ".", "lvl3", "lvl3_name", "lvl2",
                          "lvl2_name", "lvl1", "lvl1_name", "lvl0", "lvl0_name", "age", "geo",
-                         "nuts_id", "population", "sex", "time", "values"))
+                         "nuts_id", "population", "sex", "time", "values", ":="))

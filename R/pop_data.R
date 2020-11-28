@@ -17,7 +17,8 @@
 #' @importFrom dplyr filter select rename arrange
 #' @export
 #'
-#' @examples pop_data(country = c("at", "ch"), nuts = 2)
+#' @examples
+#' \donttest{pop_data(country = c("at", "ch"), nuts = 2)}
 #'
 pop_data <- function(country = c("at", "austria", "de", "germany", "fr", "france",
                                  "it", "italy", "ch", "switzerland", "li", "liechtenstein",
@@ -133,7 +134,7 @@ get_pop_data_from_source <- function(path_to_file, regex_all){
 #'   \item{population}{The number of inhabitants of the respective NUTS region.}
 #' }
 #' @importFrom magrittr %>%
-#' @importFrom dplyr filter select arrange
+#' @importFrom dplyr filter select arrange rename
 #'
 process_raw_pop_data <- function(raw_data, nuts, regex){
 
@@ -145,18 +146,25 @@ process_raw_pop_data <- function(raw_data, nuts, regex){
   # get number of characters according to requested nuts level
   if(nuts == 3) {
     chars <- 5
+    name <- "lvl3"
   } else if (nuts == 2) {
     chars <- 4
+    name <- "lvl3"
   } else if (nuts == 1) {
     chars <- 3
-  } else chars <- 2
+    name <- "lvl1"
+  } else {
+    chars <- 2
+    name <- "lvl0"
+  }
 
   # process data according to user specifications
   df <- raw_data %>%
     filter(grepl(regex, nuts_id),
            nchar(nuts_id) == chars) %>%
     select(nuts_id, time, population) %>%
-    arrange(nuts_id)
+    arrange(nuts_id) %>%
+    rename(!!name := nuts_id)
 
   return(df)
 }

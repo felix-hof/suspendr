@@ -31,7 +31,7 @@ IDs and names. The data is cached in \code{cache_dir} and read from there if the
 already exists. If the cached file is older than a week it is updated from the data sources.
 }
 \examples{
-nuts_table()
+\donttest{nuts_table()}
 }
 \seealso{
 \code{\link[base:tempdir]{tempdir()}}

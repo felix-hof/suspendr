@@ -7,7 +7,7 @@
 #' @return An object of class \code{data.frame} containing NUTS-Codes and names of the regions considered in the SUSPend project.
 #' @seealso \code{\link[base:tempdir]{tempdir()}}
 #' @examples
-#' nuts_table()
+#' \donttest{nuts_table()}
 #' @export
 #'
 nuts_table <- function(cache_dir = NULL){

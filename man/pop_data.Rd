@@ -46,6 +46,6 @@ the 31st of December.}
 This function imports population data from Eurostat.
 }
 \examples{
-pop_data(country = c("at", "ch"), nuts = 2)
+\donttest{pop_data(country = c("at", "ch"), nuts = 2)}
 
 }
