@@ -1,75 +1,112 @@
 #' Data set containing NUTS-Classifications
 #'
-#' @description A function that returns a reference table for NUTS regions including IDs and names.
-#' @param cache_dir Object of class \code{character}. Indicates a path where the return object is cached. Defaults to \code{\link{tempdir}}.
-#'
+#' @description A function that returns a reference table of NUTS regions including
+#' IDs and names. The data is cached in \code{cache_dir} and read from there if the file
+#' already exists. If the cached file is older than a week it is updated from the data sources.
+#' @template cache_dir
 #' @return An object of class \code{data.frame} containing NUTS-Codes and names of the regions considered in the SUSPend project.
+#' @seealso \code{\link[base:tempdir]{tempdir()}}
+#' @examples
+#' nuts_table()
 #' @export
 #'
+nuts_table <- function(cache_dir = NULL){
+
+  filename <- "nuts_table.rds"
+  cache_dir <- get_cache_dir(cache_dir)
+
+  # make decision whether to get data from cached file or from source
+  from_cache <- read_from_cache(cache_dir = cache_dir, filename = filename,
+                                cutoff = 7, units = "days")
+  if(from_cache){
+    nuts <- readRDS(make_path(cache_dir, filename))
+  } else {
+    nuts <- get_nuts_table_from_source(cache_dir = cache_dir, filename = filename)
+  }
+
+  return(nuts)
+}
+
+
+# helper functions ----
+
+#' Constructs the table from the Eurostat's data set.
+#'
+#' @template cache_dir
+#' @param filename A string declaring what the name of the cache file should be. Comes from the
+#' wrapper function.
+#' @return A \code{data.frame} with NUTS classifications.
 #' @importFrom magrittr %>%
 #' @importFrom dplyr filter arrange select mutate rename left_join
+#'
+get_nuts_table_from_source <- function(cache_dir, filename){
 
-
-
-get_nuts_table_from_source <- function(cache_dir = tempdir()){
   # download, unzip and import necessary file
   nuts_path <- "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-60m.shp.zip"
-  temp1 <- tempfile(tmpdir = cache_dir)
-  temp2 <- tempfile(tmpdir = cache_dir)
+  temp1 <- tempfile(tmpdir = tempdir())
+  temp2 <- tempfile(tmpdir = tempdir())
   utils::download.file(nuts_path, temp1)
   file <- utils::unzip(temp1, files = "NUTS_AT_2021.csv", exdir = temp2)
-  nuts <- utils::read.csv(file, encoding = "UTF-8")
+  nuts <- utils::read.csv(file, encoding = "UTF-8", stringsAsFactors = FALSE)
   unlink(c(temp1, temp2), recursive = TRUE)
 
   # create tables for nuts levels
   nuts_lvl3 <- nuts %>%
     filter(CNTR_CODE %in% c("CH", "AT", "DE", "FR", "IT", "LI"), nchar(NUTS_ID) == 5) %>%
     arrange(CNTR_CODE) %>%
-    select(CNTR_CODE, NUTS_ID, NUTS_NAME) %>%
-    mutate(NUTS_2 = substr(NUTS_ID, 1, 4)) %>%
-    rename(NUTS_3_NAME = NUTS_NAME, NUTS_3 = NUTS_ID)
+    select(NUTS_ID, NUTS_NAME) %>%
+    mutate(lvl2 = substr(NUTS_ID, 1, 4)) %>%
+    rename(lvl3_name = NUTS_NAME, lvl3 = NUTS_ID)
   nuts_lvl2 <- nuts %>%
     filter(CNTR_CODE %in% c("CH", "AT", "DE", "FR", "IT", "LI"), nchar(NUTS_ID) == 4) %>%
     select(NUTS_ID, NUTS_NAME) %>%
-    rename(NUTS_2 = NUTS_ID, NUTS_2_NAME = NUTS_NAME)
+    rename(lvl2 = NUTS_ID, lvl2_name = NUTS_NAME) %>%
+    mutate(lvl1 = substr(lvl2, 1, 3))
   nuts_lvl1 <- nuts %>%
     filter(CNTR_CODE %in% c("CH", "AT", "DE", "FR", "IT", "LI"), nchar(NUTS_ID) == 3) %>%
     select(NUTS_ID, NUTS_NAME) %>%
-    rename(NUTS_1 = NUTS_ID, NUTS_1_NAME = NUTS_NAME)
+    rename(lvl1 = NUTS_ID, lvl1_name = NUTS_NAME) %>%
+    mutate(lvl0 = substr(lvl1, 1, 2))
+  nuts_lvl0 <- nuts %>%
+    filter(CNTR_CODE %in% c("CH", "AT", "DE", "FR", "IT", "LI"), nchar(NUTS_ID) == 2) %>%
+    select(NUTS_ID, NUTS_NAME) %>%
+    rename(lvl0 = NUTS_ID, lvl0_name = NUTS_NAME)
 
   # join tables
-  nuts <- left_join(nuts_lvl3, nuts_lvl2, by = "NUTS_2") %>%
-    mutate(NUTS_1 = substr(NUTS_2, 1, 3)) %>%
-    left_join(., nuts_lvl1, by = "NUTS_1")
+  nuts <- left_join(nuts_lvl3, nuts_lvl2, by = "lvl2") %>%
+    left_join(., nuts_lvl1, by = "lvl1") %>%
+    left_join(., nuts_lvl0, by = "lvl0")
 
   # throw out french oversea departments
-  nuts <- nuts[-which(nuts$NUTS_1 == "FRY"), ]
+  nuts <- nuts[-which(nuts$lvl1 == "FRY"), ]
 
-  # edit naming (replace apostrophe)
-  nuts$NUTS_3_NAME <- vapply(nuts$NUTS_3_NAME, function(x) gsub("\u2019", "'", x), character(1L))
-  nuts$NUTS_2_NAME <- vapply(nuts$NUTS_2_NAME, function(x) gsub("\u2019", "'", x), character(1L))
-  nuts$NUTS_1_NAME <- vapply(nuts$NUTS_1_NAME, function(x) gsub("\u2019", "'", x), character(1L))
+  # create vector to only make one call to gsub()
+  dims <- dim(nuts)
+  df_vec <- do.call(c, nuts)
 
-  # edit naming (replace dash)
-  nuts$NUTS_3_NAME <- vapply(nuts$NUTS_3_NAME, function(x) gsub("\u2014", "-", x), character(1L))
-  nuts$NUTS_2_NAME <- vapply(nuts$NUTS_2_NAME, function(x) gsub("\u2014", "-", x), character(1L))
-  nuts$NUTS_1_NAME <- vapply(nuts$NUTS_1_NAME, function(x) gsub("\u2014", "-", x), character(1L))
+  # edit naming (replace apostrophe, dash, trailing whitespaces, some names)
+  df_vec <- vapply(df_vec, function(x) gsub("\u2019", "'", x), character(1L))
+  df_vec <- vapply(df_vec, function(x) gsub("\u2014", "-", x), character(1L))
+  df_vec <- vapply(df_vec, function(x) gsub("\\s+$", "'", x), character(1L))
+  df_vec <- vapply(df_vec, function(x) gsub("Schweiz/Suisse/Svizzera", "Schweiz", x),
+                   character(1L))
+  df_vec <- vapply(df_vec, function(x) gsub("Bourgogne-Franche-Comt\u00E9", "Bourgogne - Franche-Comt\u00E9", x),
+                   character(1L))
+  df_vec <- vapply(df_vec, function(x) gsub("Auvergne-Rh\u00F4ne-Alpes", "Auvergne - Rh\u00F4ne-Alpes", x),
+                   character(1L))
 
-  # edit naming (delete trailing whitespaces)
-  nuts$NUTS_3_NAME <- vapply(nuts$NUTS_3_NAME, function(x) gsub("\\s$", "", x), character(1L))
-  nuts$NUTS_2_NAME <- vapply(nuts$NUTS_2_NAME, function(x) gsub("\\s$", "", x), character(1L))
-  nuts$NUTS_1_NAME <- vapply(nuts$NUTS_1_NAME, function(x) gsub("\\s$", "", x), character(1L))
-
-  # edit level 1 names
-  nuts$NUTS_1_NAME[nuts$NUTS_1_NAME == "Schweiz/Suisse/Svizzera"] <- "Schweiz"
-  nuts$NUTS_1_NAME[nuts$NUTS_1_NAME == "Bourgogne-Franche-Comt\u00E9"] <- "Bourgogne - Franche-Comt\u00E9"
-  nuts$NUTS_1_NAME[nuts$NUTS_1_NAME == "Auvergne-Rh\u00F4ne-Alpes"] <- "Auvergne - Rh\u00F4ne-Alpes"
+  # reallocate vector entries to data frame
+  for(i in 0:(dims[2]-1)){
+    nuts[, i+1] <- df_vec[1:dims[1] + i*dims[1]]
+  }
 
   # order this nicely
-  nuts <- nuts %>% arrange(CNTR_CODE, NUTS_3)
+  nuts <- nuts %>% arrange(lvl3)
 
-  # save data as .RDS to cache_dir
-  saveRDS(object = nuts, file = paste0(cache_dir, "/nuts_table.RDS"))
+  # save data as .rds to cache_dir if user wants this
+  filepath <- make_path(cache_dir, filename)
+  saveRDS(object = nuts, file = filepath)
 
   return(nuts)
 }
+
