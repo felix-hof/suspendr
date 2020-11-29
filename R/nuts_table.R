@@ -4,13 +4,15 @@
 #' IDs and names. The data is cached in \code{cache_dir} and read from there if the file
 #' already exists. If the cached file is older than a week it is updated from the data sources.
 #' @template cache_dir
+#' @param population A \code{logical}. If \code{TRUE}, appends a column with population for
+#' each NUTS-3 region.
 #' @return An object of class \code{data.frame} containing NUTS-Codes and names of the regions considered in the SUSPend project.
 #' @seealso \code{\link[base:tempdir]{tempdir()}}
 #' @examples
 #' \donttest{nuts_table()}
 #' @export
 #'
-nuts_table <- function(cache_dir = NULL){
+nuts_table <- function(cache_dir = NULL, population = TRUE){
 
   filename <- "nuts_table.rds"
   cache_dir <- get_cache_dir(cache_dir)
@@ -24,8 +26,15 @@ nuts_table <- function(cache_dir = NULL){
     nuts <- get_nuts_table_from_source(cache_dir = cache_dir, filename = filename)
   }
 
+  # if population should also be returned
+  if(population){
+    population <- pop_data("all", nuts = 3, cache_dir = cache_dir)
+    nuts <- left_join(nuts, population[, c(1,3)], by = "lvl3")
+  }
+
   return(nuts)
 }
+
 
 
 # helper functions ----

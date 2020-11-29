@@ -2,7 +2,7 @@
 % Please edit documentation in R/pop_data.R
 \name{get_pop_data_from_source}
 \alias{get_pop_data_from_source}
-\title{Get population data from Eurostat}
+\title{Get population data from Eurostat (in general).}
 \usage{
 get_pop_data_from_source(path_to_file, regex_all)
 }
@@ -16,5 +16,8 @@ we are not interested in from the original data file from Eurostat.}
 Returns a \code{data.frame} containing
 }
 \description{
-Get population data from Eurostat
+This function gets data from Eurostat on NUTS-3 level and pre-processes it.
+However, this data is from 31st of December 2019 and the NUTS-3 regions in Sardegna (Italy)
+changed. Therefore the population number for regions ITG2, ITG2D, ITG2E, ITG2F, ITG2G and
+ITG2H come from IStat (the Italian statistics office).
 }

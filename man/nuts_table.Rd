@@ -4,7 +4,7 @@
 \alias{nuts_table}
 \title{Data set containing NUTS-Classifications}
 \usage{
-nuts_table(cache_dir = NULL)
+nuts_table(cache_dir = NULL, population = TRUE)
 }
 \arguments{
 \item{cache_dir}{This argument indicates the path to the
@@ -21,6 +21,9 @@ If you would like to always use the same cache directory, the simplest way to do
 to run the following line of code: \code{options(suspendr_cache_dir = "path/to/your/cache/directory"}.
 Afterwards you can just ignore the \code{cache_dir} argument as it always will use the path you set in
 the options.}
+
+\item{population}{A \code{logical}. If \code{TRUE}, appends a column with population for
+each NUTS-3 region.}
 }
 \value{
 An object of class \code{data.frame} containing NUTS-Codes and names of the regions considered in the SUSPend project.

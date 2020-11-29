@@ -2,7 +2,7 @@
 % Please edit documentation in R/pop_data.R
 \name{pop_data}
 \alias{pop_data}
-\title{Get population data from Eurostat}
+\title{Get population data from Eurostat (in general)}
 \usage{
 pop_data(
   country = c("at", "austria", "de", "germany", "fr", "france", "it", "italy", "ch",
@@ -43,7 +43,10 @@ the 31st of December.}
 }
 }
 \description{
-This function imports population data from Eurostat.
+This function gets data from Eurostat on NUTS-3 level and pre-processes it.
+However, this data is from 31st of December 2019 and the NUTS-3 regions in Sardegna (Italy)
+changed. Therefore the population number for regions ITG2, ITG2D, ITG2E, ITG2F, ITG2G and
+ITG2H come from IStat (the Italian statistics office).
 }
 \examples{
 \donttest{pop_data(country = c("at", "ch"), nuts = 2)}

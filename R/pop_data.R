@@ -1,6 +1,9 @@
-#' Get population data from Eurostat
+#' Get population data from Eurostat (in general)
 #'
-#' @description This function imports population data from Eurostat.
+#' @description This function gets data from Eurostat on NUTS-3 level and pre-processes it.
+#' However, this data is from 31st of December 2019 and the NUTS-3 regions in Sardegna (Italy)
+#' changed. Therefore the population number for regions ITG2, ITG2D, ITG2E, ITG2F, ITG2G and
+#' ITG2H come from IStat (the Italian statistics office).
 #' @param country Object of class \code{character}. One or more of
 #' \code{c("at", "austria", "de", "germany", "fr", "france", "it", "italy", "ch",
 #' "switzerland", "li", "liechtenstein", "all")}.
@@ -85,8 +88,12 @@ pop_data <- function(country = c("at", "austria", "de", "germany", "fr", "france
 # helper functions ----
 
 
-#' Get population data from Eurostat
+#' Get population data from Eurostat (in general).
 #'
+#' @description This function gets data from Eurostat on NUTS-3 level and pre-processes it.
+#' However, this data is from 31st of December 2019 and the NUTS-3 regions in Sardegna (Italy)
+#' changed. Therefore the population number for regions ITG2, ITG2D, ITG2E, ITG2F, ITG2G and
+#' ITG2H come from IStat (the Italian statistics office).
 #' @param path_to_file Character string indicating where to save the pre-processed file.
 #' @param regex_all Character string. Contains a regular expression to filter out countries
 #' we are not interested in from the original data file from Eurostat.
@@ -106,10 +113,35 @@ get_pop_data_from_source <- function(path_to_file, regex_all){
   year <- max(dat$time)
   dat <- dat %>%
     rename(nuts_id = geo, population = values) %>%
-    filter(sex == "T", grepl(regex_all, nuts_id),
-           age == "TOTAL", population != 0,
+    filter(sex == "T",
+           grepl(regex_all, nuts_id),
+           !grepl("^FRY", nuts_id), # remove French oversea departments
+           !grepl("^ITG2", nuts_id), # remove Sardegna regions: see reason below
+           age == "TOTAL",
+           population != 0,
            time == year) %>%
     select(nuts_id, time, population)
+
+  # Italy has seen some changes in NUTS classification
+  # therefore adjust manually
+  # Data taken from: I.Stat
+  # Link: http://dati.istat.it/?lang=en#
+  # Dataset name: Resident population on 1st January
+  # Year considered: 2020
+  # Accessed: 2020-11-28
+  # Data:
+  # ITG2: Sardegna : 1630474
+  # ITG2D: Sassari: 489634
+  # ITG2E: Nuoro : 206843
+  # ITG2F: Cagliari : 430914
+  # ITG2G: Oristano : 156078
+  # ITG2H: Sud Sardegna : 347005
+
+  sard <- data.frame(nuts_id = c("ITG2", "ITG2D", "ITG2E", "ITG2F", "ITG2G", "ITG2H"),
+                     time = 2020,
+                     population = c(1630474, 489634, 206843, 430914, 156078, 347005))
+  dat <- rbind(dat, sard)
+
 
   # save preprocessed file as rds to cache directory
   saveRDS(dat, path_to_file)
