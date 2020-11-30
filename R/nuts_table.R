@@ -47,16 +47,16 @@ nuts_table <- function(cache_dir = NULL, population = TRUE){
 #' @return A \code{data.frame} with NUTS classifications.
 #' @importFrom magrittr %>%
 #' @importFrom dplyr filter arrange select mutate rename left_join
-#'
+#' @importFrom utils download.file unzip read.csv
 get_nuts_table_from_source <- function(cache_dir, filename){
 
   # download, unzip and import necessary file
   nuts_path <- "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-60m.shp.zip"
   temp1 <- tempfile(tmpdir = tempdir())
   temp2 <- tempfile(tmpdir = tempdir())
-  utils::download.file(nuts_path, temp1)
-  file <- utils::unzip(temp1, files = "NUTS_AT_2021.csv", exdir = temp2)
-  nuts <- utils::read.csv(file, encoding = "UTF-8", stringsAsFactors = FALSE)
+  download.file(nuts_path, temp1)
+  file <- unzip(temp1, files = "NUTS_AT_2021.csv", exdir = temp2)
+  nuts <- read.csv(file, encoding = "UTF-8", stringsAsFactors = FALSE)
   unlink(c(temp1, temp2), recursive = TRUE)
 
   # create tables for nuts levels
