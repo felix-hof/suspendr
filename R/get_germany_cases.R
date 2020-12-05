@@ -76,12 +76,18 @@ get_germany_cases_from_source <- function(ref, cache_dir, filename){
   dat$lvl3_name[dat$lvl3_name == "Sankt Wendel, Landkreis"] <- "St. Wendel"
   dat$lvl3_name[dat$lvl3_name == "Stadtverband Saarbr\u00fccken, Landkreis"] <- "Regionalverband Saarbr\u00fccken"
   dat$lvl3_name[dat$lvl3_name == "Saar-Pfalz-Kreis, Landkreis"] <- "Saarpfalz-Kreis"
-  dat$lvl3_name[dat$lvl3_name == "G\u00e4ttingen (alt), Landkreis"] <- "G\u00e4ttingen, Landkreis"
+  dat$lvl3_name[dat$lvl3_name == "G\u00f6ttingen (alt), Landkreis"] <- "G\u00f6ttingen, Landkreis"
   dat$lvl3_name[dat$lvl3_name == "Aachen, Landkreis"] <- "St\u00e4dteregion Aachen"
   dat$lvl3_name[dat$lvl3_name == "StadtRegion Aachen"] <- "St\u00e4dteregion Aachen"
 
   # edit reference table to only include german regions for next step
   ref <- ref[ref$lvl0 == "DE", ]
+
+  # for debugging
+  if(nrow(arrange(ref[, 1:2], lvl3_name)) != nrow(sort(unique(dat$lvl3_name)))){
+   stop("error in German case data: The RKI dataset contains a new Landkreis not compatible with
+        Eurostat's NUTS names")
+  }
 
   # make reference table for join
   df <- cbind(arrange(ref[, 1:2], lvl3_name), Landkreis = sort(unique(dat$lvl3_name)))
