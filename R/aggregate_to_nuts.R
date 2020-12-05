@@ -1,4 +1,3 @@
-
 #' Aggregate pre-processed data to the desired NUTS level
 #'
 #' @param level The desired NUTS level to aggregate data to. Given as \code{numeric}.
@@ -8,7 +7,6 @@
 #' \describe{
 #'   \item{date}{A vector of class \code{Date} with the given dates.}
 #'   \item{new_cases}{A vector of class \code{numeric}. Contains the new cases of a given day and region.}
-#'   \item{cum_cases}{A vector of class \code{numeric}. Contains the cumulative cases of a given day and region.}
 #'   \item{lvl_3}{A vector of class \code{character}. Contains the NUTS 3 code of the region.}
 #'   \item{lvl_2}{A vector of class \code{character}. Contains the NUTS 2 code of the region.}
 #'   \item{lvl_1}{A vector of class \code{character}. Contains the NUTS 1 code of the region.}
@@ -22,6 +20,13 @@
 #' @importFrom rlang as_name
 #'
 aggregate_to_nuts <- function(level, ref, dat){
+
+  # for Swiss/FL data: if Liechtenstein merged to Switzerland also add population
+  if("merge_li" %in% names(attributes(dat))){
+    idx_li <- which(ref$lvl3_name == "Liechtenstein")
+    idx_stg <- which(ref$lvl3_name == "St. Gallen")
+    ref$population[idx_stg] <- ref$population[idx_stg] + ref$population[idx_li]
+  }
 
   # variables needed for aggregating data to desired nuts level
   if(level == 3){
@@ -42,7 +47,7 @@ aggregate_to_nuts <- function(level, ref, dat){
     nam <- "lvl0_name"
   }
 
-  # get population to desired level
+  # aggregate population to desired level
   ref <- ref[idx] %>%
     group_by(!!sym(var), !!sym(nam)) %>%
     summarise(population = sum(population), .groups = "drop")
@@ -50,11 +55,15 @@ aggregate_to_nuts <- function(level, ref, dat){
   # aggregate case data to desired level
   dat <- dat %>%
     group_by(date, !!sym(var)) %>%
-    summarise(new_cases = sum(new_cases),
-              cum_cases = sum(cum_cases), .groups = "drop") %>%
+    summarise(new_cases = sum(new_cases), .groups = "drop") %>%
     left_join(x = ., y = ref, by = rlang::as_name(var)) %>%
+    select(date, !!sym(var), !!sym(nam), new_cases, population) %>%
+    arrange(date) %>%
+    group_by(!!sym(var)) %>%
+    mutate(cum_cases = cumsum(new_cases)) %>%
+    arrange(date, !!sym(var)) %>%
     select(date, !!sym(var), !!sym(nam), new_cases, cum_cases, population) %>%
-    arrange(date, !!sym(var))
+    ungroup()
 
   return(dat)
 }

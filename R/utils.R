@@ -86,4 +86,6 @@ read_from_cache <- function(cache_dir, filename, cutoff, units){
 utils::globalVariables(c("CNTR_CODE", "NUTS_ID", "NUTS_NAME", ".", "lvl3", "lvl3_name", "lvl2",
                          "lvl2_name", "lvl1", "lvl1_name", "lvl0", "lvl0_name", "age", "geo",
                          "nuts_id", "population", "sex", "time", "values", ":=", "Bezirk",
-                         "AnzahlFaelle", "AnzahlFaelleSum", "new_cases", "cum_cases"))
+                         "AnzahlFaelle", "AnzahlFaelleSum", "new_cases", "cum_cases",
+                         "AnzahlFall", "Landkreis", "Meldedatum", "fall_dt", "fallklasse_3",
+                         "ktn", "region"))

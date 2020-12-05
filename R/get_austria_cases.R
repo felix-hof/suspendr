@@ -81,10 +81,9 @@ get_austria_cases_from_source <- function(cache_dir, filename){
     mutate(lvl2 = substr(lvl3, 1, nchar(lvl3) - 1),
            lvl1 = substr(lvl3, 1, nchar(lvl3) - 2),
            lvl0 = substr(lvl3, 1, nchar(lvl3) - 3)) %>%
-    select(date, Bezirk, AnzahlFaelle, AnzahlFaelleSum, lvl3, lvl2, lvl1, lvl0) %>%
+    select(date, Bezirk, AnzahlFaelle, lvl3, lvl2, lvl1, lvl0) %>%
     rename(bezirk = Bezirk,
-           new_cases = AnzahlFaelle,
-           cum_cases = AnzahlFaelleSum)
+           new_cases = AnzahlFaelle)
 
   # save cache file
   path_to_file <- make_path(cache_dir, filename)

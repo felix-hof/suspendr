@@ -16,7 +16,6 @@ names:
 \describe{
 \item{date}{A vector of class \code{Date} with the given dates.}
 \item{new_cases}{A vector of class \code{numeric}. Contains the new cases of a given day and region.}
-\item{cum_cases}{A vector of class \code{numeric}. Contains the cumulative cases of a given day and region.}
 \item{lvl_3}{A vector of class \code{character}. Contains the NUTS 3 code of the region.}
 \item{lvl_2}{A vector of class \code{character}. Contains the NUTS 2 code of the region.}
 \item{lvl_1}{A vector of class \code{character}. Contains the NUTS 1 code of the region.}
