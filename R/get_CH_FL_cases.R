@@ -55,7 +55,7 @@ get_CH_FL_cases <- function(level, merge_li, ref, cache_dir = NULL){
 #' @return A code \code{data.frame} containing the number of cases per canton and day as well as the respective
 #' NUTS codes. Also contains data from Liechtenstein.
 #' @importFrom openxlsx read.xlsx
-#' @importFrom dplyr mutate filter rename select group_by summarise ungroup
+#' @importFrom dplyr mutate filter rename select group_by summarise ungroup %>%
 #'
 get_CH_FL_cases_from_source <- function(cache_dir, filename){
 
