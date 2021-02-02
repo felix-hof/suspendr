@@ -20,4 +20,8 @@ Imports:
     rlang,
     utils,
     lubridate,
-    openxlsx
+    openxlsx,
+    rvest,
+    xml2,
+    stringr,
+    jsonlite
